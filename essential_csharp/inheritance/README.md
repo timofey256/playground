@@ -89,7 +89,7 @@ abstract class Animal {
         Console.WriteLine("I am sleeping right now");
     }
 
-    public **abstract** void move();
+    public abstract void move();
 }
 
 class Bird : Animal {
