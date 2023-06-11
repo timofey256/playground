@@ -84,7 +84,7 @@ Because of no additional look up is needed, early binding is faster than late bi
 
 Abstract classes describe abstract entities, therefore it is not possible to create an instance of the abstract class. Also, you can inherit only from 1 abstract class. Abstract members (functions, properties) can be either already defined, or not(therefore, child class should provide an implementation of such a member, similarly to interfaces). For example:
 ```
-class Animal {
+abstract class Animal {
     public void sleep() {
         Console.WriteLine("I am sleeping right now");
     }
