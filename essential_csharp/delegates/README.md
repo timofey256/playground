@@ -35,3 +35,11 @@ List<int> numbers = new List<int>() {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 Filter(numbers, IsOdd); // {1,3,5,7,9}
 Filter(numbers, IsEven); // {2,4,6,8,10}
 ```
+
+## Are delegates mutable or immutable?
+Delegates are immutable.
+
+## Delegates internals
+In .NET delegate types always derive from `System.MulticastDelegate`, which in turn derives from `System.Delegate`. `System.Delegate` is also implements `ICloneable` and `ISerializable` interfaces.
+
+`System.Delegate` has a `MethodInfo` (`System.Reflaction.MethodInfo`) property which describes the signature of a particular method: its name, parameters and the return type. Then, it also should have a pointer to a function itself. `Target` property of `System.Delegate` contains it.
