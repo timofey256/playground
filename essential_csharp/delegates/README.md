@@ -6,6 +6,7 @@ Use delegates whenever you need to separate the method being called from its con
 - **Event handling** - when you need to pass an abstract action to a UI element.
 - **Dynamic invocation** - when you have a collection of similar methods and want to call them conditionally, you just assign it to a delegate.
 - **Asynchronous programming** - when you need to execute a method on a separate thread.
+
 ## How to use delegates?
 ```c#
 delegate void FilterDelegate(int number);
