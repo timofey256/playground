@@ -6,6 +6,7 @@ What happens when we want to pass a value type as a reference type? For example,
 ```
 int num = 10;
 object o = num;
+
 ```
 The result of the conversion has to be a reference to a storage location that contains something that looks like an instance of a reference type, but the variable contains a value of value type. The opposite case is called unboxing.
 
@@ -14,3 +15,5 @@ Well, as expected, you should allocate some space in the heap for the value of t
 
 ## What happens when you unbox some reference type?
 You, firstly, should check if you even can assign a value within the reference type object to some variable and then acopy it. So 2 operations.
+
+
