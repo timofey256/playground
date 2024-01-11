@@ -113,7 +113,7 @@ Sometimes you can see `callvirt` in CIL for a non-virtual method. It is used to 
 ### Properties
 The following 2 code pieces are equivalent:
 ```csharp
- public int X { get; set; }
+public int X { get; set; }
 ```
 
 ```csharp
@@ -129,6 +129,7 @@ public int X {
 ```
 
 Both pieces generate `int get_X()` and `void set_X(int value)` in CIL.
+Important good practices: Properties should **not** be slow because the syntax looks instant. Properties should **not** have any side effects.
 
 - `=>` operator
 	You can use `=>` to shorten your code. Examples of equivalent code:
@@ -145,4 +146,36 @@ Both pieces generate `int get_X()` and `void set_X(int value)` in CIL.
 	void foo() => bar()
 	```
 
-Properties **should not** be slow because the syntax looks instant.
+- `NaN` in doubles
+	When you want to use invalid value for `double`, consider using `double.NaN` instead of `null` for nullable `double?`. Then, you can check it with `double.IsNaN(value)`
+
+### Access modifiers
+| Modifier | Description |
+| ---- | ---- |
+| public | The code is accessible for all classes |
+| private | The code is only accessible within the same class |
+| protected | The code is accessible within the same class, or in a class that is inherited from that class |
+| internal | The code is only accessible within its own assembly, but not from another assembly. |
+| protected internal | Access is limited to the current assembly OR types derived from the containing class  |
+| private protected | Access is limited to the current assembly AND types derived from the containing class |
+
+**Default access modifiers for different types:**
+- Inside class : `private`
+- Inside interface : `public`
+- class : `internal`
+
+### Variables lifetime optimizations
+JIT compiler can do optimizations of some variables like:
+```csharp
+while (...) {
+	int b = 7; // int b, ALLOC -> SUB SP, 4; // b = 7
+}
+
+// instead of allocating memory every iteration, compiler will allocation 
+// one place in memory for variable b:
+
+// ALLOC, SUB SP 4
+while (...) {
+	int b = 7;  // b=7
+}
+```
