@@ -100,3 +100,49 @@ If you want to call a member from the base (also called "parent") class, you can
 **Note that `base` does not work for the base class of the base class. In other words, `base.base.f()` won't work.**
 
 ----
+# Lecture 8
+
+**Can I call a virtual method from a constructor?** In .NET, yes. In some other languages, no. Why? Because VMT might not have been initialized yet.
+
+### Factory design pattern
+If you repeatedly generate a specific kind (or class) of objects, you can consider implementing the other object that will generate these objects on demand. For example, you need to generate apples and sometimes golden apples (once every N apple) for your tree. Perfect use-case for factory pattern. Other examples and further explanation : https://refactoring.guru/design-patterns/factory-method
+
+### `callvirt` instead of `call`
+Sometimes you can see `callvirt` in CIL for a non-virtual method. It is used to prevent errors associated with libraries. If you had library `L1` with non-virtual methods that were used in library `L2` and then decided to change these non-virtual methods to virtual, CIL of `L2` would still contain `call` which can lead to unexpected behavior like calling code of ancestor instead of descendant.
+
+### Properties
+The following 2 code pieces are equivalent:
+```csharp
+ public int X { get; set; }
+```
+
+```csharp
+private int _x;
+public int X {
+	get {
+		// return _x
+	}
+	set {
+		// set `value` to _x
+	}
+}
+```
+
+Both pieces generate `int get_X()` and `void set_X(int value)` in CIL.
+
+- `=>` operator
+	You can use `=>` to shorten your code. Examples of equivalent code:
+	```csharp
+	int X { get => _x; }
+	
+	int X => _x
+	
+	
+	void foo() {
+		bar();
+	} 
+	
+	void foo() => bar()
+	```
+
+Properties **should not** be slow because the syntax looks instant.
