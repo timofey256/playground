@@ -1,5 +1,5 @@
 # Other resources
-- Tomáš Slama's notes from the same class 3 years ago : https://slama.dev/notes/the-cs-programming-language/.
+- Tomáš Slama's notes : https://slama.dev/notes/the-cs-programming-language/.
 - 
 
 # Lecture 5: static types, constructors and enums
@@ -347,3 +347,80 @@ struct S {
  
 -----
 # Lecture 11
+
+### Arrays
+- Arrays are reference type and are allocated in GC heap. 
+- Array objects are stored almost the same as a regular reference type object:
+```
+// ---------------------------------------------------
+// | sync block | reference to Type object | Length of array |a1|a2|...|a_n|
+// ---------------------------------------------------
+```
+- Arrays are always initialized after declaring.
+- arrays are a descendant of `System.Array`.
+- **Multidimensional arrays**: 
+	- Jagged: `int[][] a = new int[2][]`. Literally, arrays of arrays (as a reference types). We store pointers to arrays in the bigger array. It allows to these smaller arrays have different sizes because they are independent objects.
+	- Rectangular: `int[,] = new int[2,3]`.
+	
+	Because of back compatibility with VSBasic rectangular arrays are paradoxically slower for access than jagged. They are still more memory efficient but keep in mind that access in 2-3x slower.
+- When you access elements in array, runtime checks if you are accessing elements still inside array (if no, throws `IndexOutOfRangeException`)
+
+**`default` keyword**: `default(int)` or just `default` initialized variable with its default value. For `int` it is 0, for `string` it is "", and so on.
+
+### Implicit and explicit constructors
+Object always has an implicit constructor without parameters which sets zero to memory that is allocated for the object for initializing. Also, object can have an explicit constructor without parameters. But it is called only explicitly too. Example:
+```csharp
+class C {
+	public C() { Console.WriteLine("Hello from C.ctor!"); }
+}
+
+struct S1 {
+	public C c;
+}
+
+struct S2 {
+	public C c = new C();
+}
+
+S1 s1 = new S1(); // no message
+S2 s2 = new S2(); // "Hello from C.ctor!"
+```
+
+### `goto`
+Isn't as bad as people say. Can be used in certain situations. 
+
+In C# `goto` can't go inside some scope because it was a common cause of plentiful of bugs in languages like C where `goto` can jump anywhere. So in C# you can move inside the current scope and step out of it. 
+
+In CIL `goto` implemented with `jmp`.
+
+Good use-cases of `goto`:
+1. If you can simulate some process using non-complex finite-state machine, `goto` can be helpful. Or `switch` statement.
+2. Jump outside of several loops (break will stop only the first outer one).
+3. In switch statements. If you have several cases but want to redirect some case to another, use `goto`.
+
+### `switch` statement
+
+You can use `switch` how it is used the most, as void statement:
+```csharp
+switch(variable) {
+	case smth1:
+		break;
+	case smth2:
+	case smth3:
+		break;
+	default:
+		// ...
+}
+```
+
+Or also in C# you can use it as expression which returns result:
+```csharp
+int x = 10;
+var result = x switch {
+	> 10 and < 20 => 1000,
+	int b => b + 10,
+	null => -1
+} 
+```
+
+Here we used so-called **pattern matching**. It is a technique that allows you to test an expression to determine if it has certain characteristics.
