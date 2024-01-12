@@ -71,7 +71,7 @@ Further reading : ["Virtual, new and override in C#"](https://pnguyen.io/posts/v
 
 ------
 
-# Lecture 7
+# Lecture 7: hiding members of children, abstract vs interface, `base` keyword
 ### Hiding members in descendant (keyword `new`)
 In the code below we **hid member** `f()` of `A`'s parent. Why it only shows **warning** and does not throw error? Because if it did, it could cause a lot of problems in large code bases. Let's say `B` is some class from some library we use and `A` is our class which inherits from `B`. If we had created method `f()` before it was in `B` and then developers of the library decided to create a member with this name, then our code is broken. That's bad and that's the reason hiding members is warning, not error.
 ```
@@ -100,7 +100,7 @@ If you want to call a member from the base (also called "parent") class, you can
 **Note that `base` does not work for the base class of the base class. In other words, `base.base.f()` won't work.**
 
 ----
-# Lecture 8
+# Lecture 8: factory, `callvirt`, properties, access modifiers
 
 **Can I call a virtual method from a constructor?** In .NET, yes. In some other languages, no. Why? Because VMT might not have been initialized yet.
 
@@ -182,7 +182,7 @@ while (...) {
 
 ----
 
-# Lecture 9
+# Lecture 9: value and reference types, pointers, introduction to tracking reference
 
 ### Explicit scope
 If you want to separate some chunks of code and create an artificial scope, you can just use curly brackets
@@ -261,7 +261,7 @@ for (int i=0; i<1000; i++) {
 - Solution for C# : reference parameters
 
 ------
-# Lecture 10
+# Lecture 10: tracking reference, hidden `this` and why structs are sealed
 
 ### Value vs reference parameters
 **Value parameters**:
@@ -346,7 +346,7 @@ struct S {
  If it `foo()` also had `this` as a hidden parameter of type `S` to call `this.bar()`, then struct `S` would have been copied to `this` and the variable `_x` would have been changed there and we would not be able to see changes in our struct. Because of that **structs have tracking reference as a hidden parameter**: `public void foo(ref S this) { ... }`
  
 -----
-# Lecture 11
+# Lecture 11: arrays, constructors, goto and switch
 
 ### Arrays
 - Arrays are reference type and are allocated in GC heap. 
@@ -427,7 +427,7 @@ Here we used so-called **pattern matching**. It is a technique that allows you t
 
 ----
 
-# Lecture 12
+# Lecture 12: pattern matching, exceptions
 
 ### Pattern matching
 - a is X { property1 : ..., property2 : ... }
