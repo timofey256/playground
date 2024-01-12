@@ -179,3 +179,82 @@ while (...) {
 	int b = 7;  // b=7
 }
 ```
+
+----
+
+# Lecture 9
+
+### Explicit scope
+If you want to separate some chunks of code and create an artificial scope, you can just use curly brackets
+```csharp
+void foo() {
+	// some code...
+	int b = 0;
+	{
+		// more code...
+		int c = 0;
+		Console.WriteLine(c);
+	}
+	// rest of the code...
+}
+```
+
+
+### Value and reference types
+
+**Value type**:
+```csharp
+struct S {
+	int a1, a2, a3; // entire struct is 12B big
+}
+
+int b = 7; // 4B
+
+S s1 = new S(); // don't conflate with `new` in reference types, for value types `new` doesn't allocate anything! 
+```
+
+**Reference types:**
+- address to the entire object in garbage-collected heap.
+- explicit allocation with `new`.
+- How is it store in memory?
+	```csharp
+	class A {
+		int a1, a2;
+	}
+	
+	// ---------------------------------------------------
+	// | sync block | reference to Type object | a1 | a2 |
+	// ---------------------------------------------------
+	```
+- How to get address where object is stored? You can't.
+- `Object` is reference type but value types also inherit from it. How so? To make it work, C# uses (un)boxing.
+```csharp
+// boxing:
+int a = 5;
+object o = a; // boxing `a`. Runtime creates an instance of System.Int32 on heap. And address to this instance will be stored in `o`.
+
+// unboxing:
+object o = 5;
+int i = (int)o; // unboxing always requires explicit casting.
+```
+- You want to prevent repeated boxing/unboxing in your code because it significantly slows it down. Example:
+```csharp
+object o = 5;
+for (int i=0; i<1000; i++) {
+	o = ((int)o)+1 // here we first unbox `o` to increment it. then, runtime check for types. then, we box it to save it to `o`.
+}
+```
+- The other downside of allowing (un)boxing is that you now can't see potential runtime errors associated with casting to different types.
+
+### Pointers in C\#
+- It is address.
+- Syntax : `int* a, b;`
+- Explicit reference/dereference : `a=&...; *b=...`
+- No limitations to what it can be pointer.
+- Garbage collector is not responsible for pointers!
+
+### Something in between pointers and reference types : tracking reference
+- Can point to GC heap, static field, local variable.
+- 4B or 8B (depends on if system is 32b or 64b)
+- Can't access address of reference in memory.
+- 
