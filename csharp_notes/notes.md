@@ -29,7 +29,7 @@ When you "redirect" constructor with `this()` (for example: `public A : this("He
  **Ancestor's constructor is always called** (except for `object`). If class has no `base()` or `this()` in constructor, then constructor of `object()` will be called.
 
 ### **Enums** are value type.
-  Use them to define a bunch of constant values when you don't want to mix values of the same type but different semantics(like month and day, both are strings). Also, consider `struct` for these purposes.
+Use them to define a bunch of constant values when you don't want to mix values of the same type but different semantics(like month and day, both are strings). Also, consider `struct` for these purposes.
 
 -----
 # Lecture 6: NuGet, Benchmarks, Optimizations and virtual methods tables
@@ -199,9 +199,7 @@ void foo() {
 }
 ```
 
-
 ### Value and reference types
-
 **Value type**:
 ```csharp
 struct S {
@@ -413,7 +411,7 @@ switch(variable) {
 }
 ```
 
-Or also in C# you can use it as expression which returns result:
+Or, also, in C# you can use it as expression which returns result:
 ```csharp
 int x = 10;
 var result = x switch {
@@ -430,8 +428,8 @@ Here we used so-called **pattern matching**. It is a technique that allows you t
 # Lecture 12: pattern matching, exceptions
 
 ### Pattern matching
-- a is X { property1 : ..., property2 : ... }
-- a is X(...). 
+- a is `X { property1 : ..., property2 : ... }`
+- a is `X(...)`. 
 	  Have to have `Deconstruct(out a, out b, ...)` method! 
 	  Example of duck typing.
 - a is [condition, condition, type, condition, ....]. 
@@ -441,8 +439,8 @@ Here we used so-called **pattern matching**. It is a technique that allows you t
 ### Exception
 - All exceptions are reference type objects and have to be descendants of `System.Exception` or descendants of other types that inherit from `System.Exception`.
 - If exception is thrown, then the rest of the code of function will be skipped as well as the rest of the code of functions which called the function where this error has occurred. 
-- Exception objects also have data like `message` and `StackTrace`. `StackTrace` gets a string representation of the immediate frames on the call stack. It helps to find out how, where and why error has occurred.
-- **Why exceptions are so slow?** Part of the reason is that if fills `StackTrace` and we can't just literally jump to the end of the function when error was thrown. It could have leaded to unallocated variables and overall problems with memory. So this "jump" is quite complex from the runtime standpoint. 
+- Exception objects also have members like `message` and `StackTrace`. `StackTrace` gets a string representation of the immediate frames on the call stack. It helps to find out how, where and why error has occurred.
+- **Why exceptions are so slow?** Part of the reason is that it fills `StackTrace` and we can't just literally jump to the end of the function when error was thrown. It could have leaded to unallocated variables and overall problems with memory. So this "jump" is quite complex from the runtime standpoint. 
 
 #### Code contracts
 Basic principles of automated analysis and verification of programs (model checking, static analysis, dynamic analysis, and deductive methods) and their practical applications (e.g., detecting concurrency errors).
