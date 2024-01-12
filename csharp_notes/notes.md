@@ -257,4 +257,93 @@ for (int i=0; i<1000; i++) {
 - Can point to GC heap, static field, local variable.
 - 4B or 8B (depends on if system is 32b or 64b)
 - Can't access address of reference in memory.
-- 
+- Used in C++/CLI language (C++ and C# mixture language)
+- Solution for C# : reference parameters
+
+------
+# Lecture 10
+
+### Value vs reference parameters
+**Value parameters**:
+```csharp
+void Inc(int x) { x = x + 1; }
+void f() {
+	int val = 3;
+	Inc(val); // val == 3
+}
+```
+- "call by value"
+- value is copied inside a called function
+- actual parameter is an expression (so could be `Inc(123123)`)
+
+**Reference parameters:**
+```csharp
+void Inc(ref int x) { x = x + 1; }
+void f() {
+	int val = 3;
+	Inc(ref val); // val == 3
+}
+```
+- "call by reference"
+- formal parameter is an alias for the actual parameter (address of actual parameter is passed)
+- actual parameter must be a variable (so could **not** be `Inc(123123)`)
+
+**Discard variable**: If you want to discard some return value, use `_`. Example : `int.TryParse("123", out int _)`.
+
+***in* and *ref readonly*** : almost the same except some technicalities.
+
+### Quick note about inheritance of interfaces
+Despite interfaces not inherit from `object` we can call function that are implemented there. Why? Because interface is always implemented by some object. This object should inherit from `object` type by default; as a consequence, it is always possible to call from interface all functions defined in `object` like `.ToString()`, `.GetHashCode()`, `GetType()`, etc. 
+
+### Why structs are sealed?
+Consider the following code:
+```csharp
+struct S1 {
+	int x;
+}
+
+struct S2 : S1 {
+	int y;
+}
+
+S1 s1 = new S1(); // size 4B
+S2 s2 = new S2(); // size 8B
+
+s1 = s2 // what should happen? s1 is 4B and s2 is 8B. it would be complex and is frequent cause of bugs (for example in C++ where structs aren't sealed), so this structs are sealed.
+
+// note that this does not happen in reference types because all variables of this type are equal in their size (cuz they are pointers to memory)
+```
+
+### Hidden `this` as a parameter in methods
+When you call some member(property, field or function) of the current type inside a method, you also use a hidden `this`.
+```csharp
+class C {
+	public void foo() { // in fact, it is `public void foo(C this)`
+		bar(); // in fact, it is `this.bar()`
+	}
+	
+	public void bar() { // same logic here : `public void bar(C this)`
+		Console.WriteLine("Hello from bar()!");
+	}
+}
+```
+
+In classes `this` has clearly type of its class - reference type variable. But what type do structs have? Consider the following example:
+
+```csharp
+struct S {
+	int _x = 0;
+	
+	public void foo() {
+		bar();
+	}
+	
+	public void bar() {
+		_x++;
+	}
+}
+```
+ If it `foo()` also had `this` as a hidden parameter of type `S` to call `this.bar()`, then struct `S` would have been copied to `this` and the variable `_x` would have been changed there and we would not be able to see changes in our struct. Because of that **structs have tracking reference as a hidden parameter**: `public void foo(ref S this) { ... }`
+ 
+-----
+# Lecture 11
