@@ -2,29 +2,29 @@
 
 ### `const` vs `readonly` vs `readonly static`
 How are they stored in memory:
-	`readonly` will take up space for every instance of an object.
-	`readonly static` will be stored in one specific place in memory which will be shared among all instances of object.
-	`static` won't take up any space and will be replaced with actual values during compilation.
+	`readonly` will occupy space for every instance of an object.
+	`readonly static` will be stored in one specific place in memory, shared among all object instances..
+	`static` won't occupy any space and will be replaced with actual values during compilation.
 
-During compile-time compiler does so-called **constant-folding**. If makes computations on constants wherever it can. For example `int variable = 2*2*2` will be folded to `int variable = 8`.
+During compile-time, the compiler performs **constant-folding**, making computations on constants wherever possible. For example, `int variable = 2 * 2 * 2` will be folded to `int variable = 8`.
 
-Note that we cannot assign a runtime values (for example output of functions) to a  constant. So you can't create a constant like `const int sinusOfRightAngle = Math.Sin(90)` If you, however, still want to do this, use `static readonly`.
+Note that you cannot assign runtime values (e.g., the output of functions) to a constant. Therefore, creating a constant like `const int sinusOfRightAngle = Math.Sin(90)` is not allowed. If needed, use `static readonly`.
 
 **Exception**: `string` can be assigned to a constant despite being a reference type.
 
-If you will use constants in your library, after changing them there, you should also recompile a program that uses this library. Otherwise, program will use old values of these constants. It does not occur with `readonly` fields
+If you use constants in your library, after changing them, you should also recompile a program that uses this library. Otherwise, the program will use old values of these constants. This does not occur with `readonly` fields.
 
 ### (Static) constructors 
-Static constructors aren't called on the start of the program but whenever you need to use static field or property. JIT compiler will analyze your code and call static constructor before you will use any method/field/property of object. In other words, constructors are **guaranteed** to be called before you call anything from an object.
+Static constructors aren't called at the start of the program but whenever you need to use a static field or property. The JIT compiler will analyze your code and call the static constructor before you use any method/field/property of an object. In other words, constructors are **guaranteed** to be called before you call anything from an object.
 
-In intermediate language class constructor(or static constructor, or type constructor) is called `.cctor` (usual constructors are denoted `.ctor`)
+In intermediate language, a class constructor (or static constructor, or type constructor) is called `.cctor` (usual constructors are denoted `.ctor`).
 
 When you "redirect" constructor with `this()` (for example: `public A : this("Hello world") { body }`), you call another constructor and then, after initializing the object in this another constructor, the body is called (so not before!).
  
  **Ancestor's constructor is always called** (except for `object`). If class has no `base()` or `this()` in constructor, then constructor of `object()` will be called.
 
 ### **Enums** are value type.
-Use them to define a bunch of constant values when you don't want to mix values of the same type but different semantics(like month and day, both are strings). Also, consider `struct` for these purposes.
+Use them to define a set of constant values when you don't want to mix values of the same type but different semantics (like month and day, both as strings). Also, consider using `struct` for these purposes.
 
 <div style="page-break-after: always"></div>
 
