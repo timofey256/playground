@@ -446,7 +446,7 @@ Here we used so-called **pattern matching**. It is a technique that allows you t
 Basic principles of automated analysis and verification of programs (model checking, static analysis, dynamic analysis, and deductive methods) and their practical applications (e.g., detecting concurrency errors).
 
 -----
-# Lecture 13
+# Lecture 13: more about exceptions, `finally` and `using` keywords
 
 ### Problems caused by exceptions
 If you was constructing or updating some data structure when error occurred, it could have caused invalidness of this data structure. How to prevent it?
@@ -505,7 +505,7 @@ using System;
 ```
 
 -------
-# Lecture 14
+# Lecture 14: garbage collection and strings
 
 ### Garbage collector
 **Garbage collection** (**GC**) is a mechanism for automatic memory management. The garbage collector attempts to reclaim memory which was allocated by the program, but is no longer referenced; such memory is called garbage.
