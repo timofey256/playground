@@ -1,7 +1,3 @@
-# Other resources
-- Tomáš Slama's notes : https://slama.dev/notes/the-cs-programming-language/.
-- 
-
 # Lecture 5: static types, constructors and enums
 
 ### `const` vs `readonly` vs `readonly static`
@@ -18,7 +14,6 @@ Note that we cannot assign a runtime values (for example output of functions) to
 
 If you will use constants in your library, after changing them there, you should also recompile a program that uses this library. Otherwise, program will use old values of these constants. It does not occur with `readonly` fields
 
-
 ### (Static) constructors 
 Static constructors aren't called on the start of the program but whenever you need to use static field or property. JIT compiler will analyze your code and call static constructor before you will use any method/field/property of object. In other words, constructors are **guaranteed** to be called before you call anything from an object.
 
@@ -31,7 +26,8 @@ When you "redirect" constructor with `this()` (for example: `public A : this("He
 ### **Enums** are value type.
 Use them to define a bunch of constant values when you don't want to mix values of the same type but different semantics(like month and day, both are strings). Also, consider `struct` for these purposes.
 
------
+<div style="page-break-after: always"></div>
+
 # Lecture 6: NuGet, Benchmarks, Optimizations and virtual methods tables
 ### NuGet package manager
 It is a place where people can publish their libraries. Every package has `.nupkg` extension.
@@ -69,7 +65,7 @@ Further reading : ["Virtual, new and override in C#"](https://pnguyen.io/posts/v
 
 **A big downside of virtual methods** is that it's impossible to inline them. So they are on average slower than usual methods.
 
-------
+<div style="page-break-after: always"></div>
 
 # Lecture 7: hiding members of children, abstract vs interface, `base` keyword
 ### Hiding members in descendant (keyword `new`)
@@ -99,7 +95,8 @@ If you want to call a member from the base (also called "parent") class, you can
 
 **Note that `base` does not work for the base class of the base class. In other words, `base.base.f()` won't work.**
 
-----
+<div style="page-break-after: always"></div>
+
 # Lecture 8: factory, `callvirt`, properties, access modifiers
 
 **Can I call a virtual method from a constructor?** In .NET, yes. In some other languages, no. Why? Because VMT might not have been initialized yet.
@@ -180,7 +177,7 @@ while (...) {
 }
 ```
 
-----
+<div style="page-break-after: always"></div>
 
 # Lecture 9: value and reference types, pointers, introduction to tracking reference
 
@@ -258,7 +255,8 @@ for (int i=0; i<1000; i++) {
 - Used in C++/CLI language (C++ and C# mixture language)
 - Solution for C# : reference parameters
 
-------
+<div style="page-break-after: always"></div>
+
 # Lecture 10: tracking reference, hidden `this` and why structs are sealed
 
 ### Value vs reference parameters
@@ -343,7 +341,8 @@ struct S {
 ```
  If it `foo()` also had `this` as a hidden parameter of type `S` to call `this.bar()`, then struct `S` would have been copied to `this` and the variable `_x` would have been changed there and we would not be able to see changes in our struct. Because of that **structs have tracking reference as a hidden parameter**: `public void foo(ref S this) { ... }`
  
------
+<div style="page-break-after: always"></div>
+
 # Lecture 11: arrays, constructors, goto and switch
 
 ### Arrays
@@ -423,7 +422,7 @@ var result = x switch {
 
 Here we used so-called **pattern matching**. It is a technique that allows you to test an expression to determine if it has certain characteristics.
 
-----
+<div style="page-break-after: always"></div>
 
 # Lecture 12: pattern matching, exceptions
 
@@ -445,7 +444,9 @@ Here we used so-called **pattern matching**. It is a technique that allows you t
 #### Code contracts
 Basic principles of automated analysis and verification of programs (model checking, static analysis, dynamic analysis, and deductive methods) and their practical applications (e.g., detecting concurrency errors).
 
------
+<div style="page-break-after: always"></div>
+<div style="page-break-after: always"></div>
+
 # Lecture 13: more about exceptions, `finally` and `using` keywords
 
 ### Problems caused by exceptions
@@ -504,7 +505,8 @@ using Point = (int x, int y);
 using System;
 ```
 
--------
+<div style="page-break-after: always"></div>
+
 # Lecture 14: garbage collection and strings
 
 ### Garbage collector
