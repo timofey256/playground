@@ -504,3 +504,76 @@ using Point = (int x, int y);
 using System;
 ```
 
+-------
+# Lecture 14
+
+### Garbage collector
+**Garbage collection** (**GC**) is a mechanism for automatic memory management. The garbage collector attempts to reclaim memory which was allocated by the program, but is no longer referenced; such memory is called garbage.
+
+Main .NET GC developer is Maoni Stephens.  
+
+#### Heap types
+- Small Object Heap (SOH) for small objects
+- Large Object Heap (LOH) for large objects : >85000 bytes (value is empiric). **No heap-compacting here (!)** except if not forced with settings. Also, is garbage-collected only after garbage collection occurred in generation 2 of objects (see below).
+
+Note that if you have, for example, array of large objects, then it does not mean that this array will end up in the LOH too. Because it contains references and not objects themselves, it could be in SOH.
+
+#### Kernel memory allocation calls
+- reserve VA(virtual address) : returns address and size of memory that **can** (not "is") allocated.
+- commit VA : allocation in memory.
+- decommit/free : free a specific region
+
+**Segment (old definition) / region (modern definition)** is a block of allocated memory in .NET. 
+
+#### Garbage collector modes
+Server mode (optimized for fast response time, high throughput and scalability):
+	Shared heap. It GC is called, then all threads are paused. Also, GC operates from the thread that called GC.
+Workstation mode (designed for client apps):
+	GC has its separate threads.
+Read more [here](https://learn.microsoft.com/en-us/dotnet/standard/garbage-collection/workstation-server-gc)
+
+#### When GC is executed?
+**When memory is needed.** In other words, when you try to allocate memory, usually with `new`. Also, Windows OS can send message to all applications to run their GCs.
+
+Garbage collection is very good for **short-lived objects** because we will free a lot of memory when GC is executed; consequently, we won't need to copy a lot of objects.
+
+#### How objects are stored?
+- GC builds a graph of objects where vertices are objects and edges are references to other objects (for example, field with some reference type object).
+- Static variable are allocated separately.
+- For every thread we also have call stack.
+- JIT compiles let's GC now all of the data above. They are called **GC roots**.
+
+#### How it works?
+- (1. phase) Traverse the graph of objects and mark all objects.
+- (2. phase) Then, delete all objects which were not marked.
+
+**Problems:**
+- Holes in memory : when you free some blocks, your memory can become tattered. And then you can have enough memory for allocating some new object but because this memory isn't sequential, you will fail to allocate this new object. Solution: **heap compacting**: GC squeezes objects together, trying not to leave free memory between them.
+
+#### Generational GC
+(text taken from [here](https://learn.microsoft.com/en-us/dotnet/standard/garbage-collection/fundamentals#generations))
+The GC algorithm is based on several considerations:
+
+- It's faster to compact the memory for a portion of the managed heap than for the entire managed heap.
+- Newer objects have shorter lifetimes, and older objects have longer lifetimes.
+- Newer objects tend to be related to each other and accessed by the application around the same time.
+
+Garbage collection primarily occurs with the reclamation of short-lived objects. To optimize the performance of the garbage collector, the managed heap is divided into three generations, 0, 1, and 2, so it can handle long-lived and short-lived objects separately. The garbage collector stores new objects in generation 0. Objects created early in the application's lifetime that survive collections are promoted and stored in generations 1 and 2. Because it's faster to compact a portion of the managed heap than the entire heap, this scheme allows the garbage collector to release the memory in a specific generation rather than release the memory for the entire managed heap each time it performs a collection.
+
+- **Generation 0**: This generation is the youngest and contains short-lived objects. An example of a short-lived object is a temporary variable. Garbage collection occurs most frequently in this generation.
+- **Generation 1**: This generation contains short-lived objects and serves as a buffer between short-lived objects and long-lived objects.
+- **Generation 2**: This generation contains long-lived objects. An example of a long-lived object is an object in a server application that contains static data that's live for the duration of the process.
+
+#### Memory leaks
+When can occur? Typical cases:
+- Reference from a variable.
+- Long-lived objects. If we don't reach 2. generation, long-lived objects can be there for a very long time.
+- When you call `List<T>.Clear()`. `Clear()` sets Count of the list to zero but objects that were in the list still can be pointed to other objects which prevents them from being garbage-collected. Ideally, if you know that you won't fill all cleared cells in list, you should set them to `null`.
+
+### Strings
+- In memory stored as a block : [length, char0, char1, ...].
+- Always immutable.
+- `StringBuilder` is a "mutable string". Inside is something like `List<char>`.
+- There are a lot of optimizations for `string`: for example, if you write something like `"hello from C# notes" + "yeah, it's the last lecture" + "uWu"` compiler will replace it with `string.Concat()` of this strings which is faster.
+- `string.Format("{0}, .... {1} ....", string1, string2)`. Be careful with this one, for `string1`/`string2` values like `{0}`, `{1}` it will fill with `string1` and `string2` again.
+- `$"{string1} ... {string2}"` is another way to concatenate strings. Behind the scenes uses `InterpolatedStringHandler`.
