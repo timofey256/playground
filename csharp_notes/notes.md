@@ -436,11 +436,71 @@ Here we used so-called **pattern matching**. It is a technique that allows you t
 	  Should have at least 3 elements (conditions and/or types)
 	  Note that types in this matching could allocated on GC heap!
 
-### Exception
+### Exceptions
 - All exceptions are reference type objects and have to be descendants of `System.Exception` or descendants of other types that inherit from `System.Exception`.
 - If exception is thrown, then the rest of the code of function will be skipped as well as the rest of the code of functions which called the function where this error has occurred. 
-- Exception objects also have members like `message` and `StackTrace`. `StackTrace` gets a string representation of the immediate frames on the call stack. It helps to find out how, where and why error has occurred.
+- Exception objects also have members like `message`, `StackTrace`, `InnerException`. `StackTrace` gets a string representation of the immediate frames on the call stack. It helps to find out how, where and why error has occurred. `InnerException` is the other exception which caused the exception. For example, you create your custom exception `UserNotFoundException` when you don't find your user in data. Exception you get might be `FileNotFoundException`, `SqlException` and so on. Then, you return `UserNotFoundException` with the specific `InnerException` which caused it. 
 - **Why exceptions are so slow?** Part of the reason is that it fills `StackTrace` and we can't just literally jump to the end of the function when error was thrown. It could have leaded to unallocated variables and overall problems with memory. So this "jump" is quite complex from the runtime standpoint. 
 
 #### Code contracts
 Basic principles of automated analysis and verification of programs (model checking, static analysis, dynamic analysis, and deductive methods) and their practical applications (e.g., detecting concurrency errors).
+
+-----
+# Lecture 13
+
+### Problems caused by exceptions
+If you was constructing or updating some data structure when error occurred, it could have caused invalidness of this data structure. How to prevent it?
+- **Defensive programming**: use keywords and other techniques to ensure that you can't have logically invalid data in data structure. For example, `required` keyword.
+- Implement undo: throw a specific error, then catch it with try-catch block and make undo in catch block. If needed, throw error further.
+
+Note that if you will send your error further from `catch` block, then it will create a new `StackTrace`:
+```csharp
+try {
+	// ...
+}
+catch (Exception e) {
+	// process error
+	throw e; // creates new StackTrace!
+}
+```
+Sometimes it is useful if your client has an access to errors and you don't want him to know internals of your program.
+
+### `try` and `finally`
+When to use `finally` block? When you want to execute some code regardless of we got exception of not. Good example is closing opened files (`StreamReader`, `StreamWriter`, `XmldataWriter`, etc.) after using them. 
+
+**Disposable pattern:** when some object holds some resources, it is useful to implement a function (often called `Dispose()`) to release these resources. If you use files, close your files in `Dispose()` method. If you don't use pointers, you usually don't want to implement Disposable pattern according to documentation. It will be enough to implement `Dispose()` method using `IDisposable` interface. Also, don't forget that someone can want to use the object after calling `Dispose()`. In this case, return `ObjectDisposedException`.
+
+### `using` statement
+The `using` statement ensures the correct use of an [IDisposable](https://learn.microsoft.com/en-us/dotnet/api/system.idisposable) instance.
+Often it is used to work with files: file is opened only for the duration of the code inside `using`, then `.Dispose()` is called.
+
+**How to use it?**
+- one using:
+```csharp
+var numbers = new List<int>();
+using (StreamReader reader = File.OpenText("reader.txt"))
+{
+	// ...
+}
+```
+
+- several usings: you can either nest them, or inline outer ones:
+```csharp
+
+using (StreamWriter writer = File.OpenText("writer.txt"))
+using (StreamReader reader = File.OpenText("reader.txt"))
+{
+	// ...
+}
+```
+
+- **aliases**: you can use `using` as a declaration of alias for something. It should be defined in the global scope. From C#12 you can declare it also for generic types.
+```csharp
+using Point = (int x, int y);
+```
+
+- import namespace:
+```csharp
+using System;
+```
+
