@@ -429,8 +429,21 @@ Here we used so-called **pattern matching**. It is a technique that allows you t
 ### Pattern matching
 - a is `X { property1 : ..., property2 : ... }`
 - a is `X(...)`. 
-	  Have to have `Deconstruct(out a, out b, ...)` method! 
-	  Example of duck typing.
+	Have to have `Deconstruct(out a, out b, ...)` method! 
+	It is an example of duck typing.
+	  
+	Imagine you have a `Person` class and want to get name of a specific person with easy syntax: `var (firstName, lastName) = p`. To do so, you should implement `Deconstruct()` method:
+```csharp
+class Person {
+	public string FirstName { get; set; }
+	public string LastName { get; set; }
+	
+	public void Deconstruct(out string firstName, out string lastName) {
+		firstName = FirstName;
+		lastName = LastName;
+	}
+}
+```
 - a is [condition, condition, type, condition, ....]. 
 	  Should have at least 3 elements (conditions and/or types)
 	  Note that types in this matching could allocated on GC heap!
