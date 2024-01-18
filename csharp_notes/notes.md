@@ -315,7 +315,7 @@ void f() {
 void Inc(ref int x) { x = x + 1; }
 void f() {
 	int val = 3;
-	Inc(ref val); // val == 3
+	Inc(ref val); // val == 4
 }
 ```
 - "call by reference"
