@@ -86,7 +86,7 @@ call[this.GetType().VMT[index of function virtual table]]   // where `this`     
 **How is virtual methods table implemented?**
 VMT is used to determine at **run time** which method from which class in the hierarchy to call. If class has at least 1 virtual method, it will also have pointer to its VMT. This pointer will always be at the beginning of the object address (see an image below). All object instances of the same class will share the same `vtable`.
 
-![[Pasted image 20240104175210.png]]
+![[vmt.png]]
 
 Further reading : ["Virtual, new and override in C#"](https://pnguyen.io/posts/virtual-new-override-csharp/) (it also shows what happens during casting)
 
@@ -116,7 +116,7 @@ class A : B {
 **`sealed override`** keyword allows you to prevent descendants of class from overriding some function. You can use it when you want to say that "this implementation is the final one and no one should overwrite it". The advantage of it is that even though in CIL it will still be a `callvirt` command, while translating CIL to x86 JIT can possibly inline it; thus, increasing performance (by a small margin though; but good to know that it happens at all).
 
 ### abstract method vs interface method
-![[Pasted image 20240104191647.png]]
+![[abstract_vs_interface.png]]
 
 Why there can be no data in interface? Because if there were, then we have the diamond problem: several classes share the same data, then you make a class that inherits from both of them, and now this new class has several instances of the same object. This also applies to methods, not only data, [see description on wiki](https://en.wikipedia.org/wiki/Multiple_inheritance#The_diamond_problem) . 
 
