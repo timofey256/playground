@@ -15,7 +15,9 @@ Note that you cannot assign runtime values (e.g., the output of functions) to a 
 If you use constants in your library, after changing them, you should also recompile a program that uses this library. Otherwise, the program will use old values of these constants. This does not occur with `readonly` fields. That's why it is not a good idea to use public constants.
 
 ### (Static) constructors 
-Static constructors aren't called at the start of the program but whenever you need to use a static field or property. The JIT compiler will analyze your code and call the static constructor before you use any method/field/property of an object. In other words, constructors are **guaranteed** to be called before you call anything from an object.
+Static constructors aren't called at the start of the program but whenever you need to use a static field or property.  The JIT compiler will analyze your code and generate will generate CIL code that will lazily call the static constructor before the first access to a method, field, or property. In other words, constructors are **guaranteed** to be called before you call anything from an object. If JIT compilation occurs after the static constructor has already been called, no additional code is generated.
+
+*Side note: This has an interesting implication on the order of code execution, potentially influencing seemingly unrelated parts of the program's performance. Ensuring that all static constructors have run before JIT-compiling the hot path can, in certain cases (though not always measurably), enhance performance. In more recent .NET versions, the introduction of tiered compilation addresses this concern by compiling all methods twice, with the second pass likely covering the execution of almost all static constructors. This diminishes the necessity of explicitly managing the order of static constructor calls before JIT compilation.*
 
 In intermediate language, a class constructor (or static constructor, or type constructor) is called `.cctor` (usual constructors are denoted `.ctor`).
 
@@ -24,7 +26,22 @@ When you "redirect" constructor with `this()` (for example: `public A : this("He
  **Ancestor's constructor is always called** (except for `object`). If class has no `base()` or `this()` in constructor, then constructor of `object()` will be called.
 
 ### **Enums** are value type.
-Use them to define a set of constant values when you don't want to mix values of the same type but different semantics (like month and day, both as strings). Also, consider using `struct` for these purposes.
+Use them to define a set of constant values when you don't want to mix values of the same type but different semantics (like month and day, both as strings). Also, consider using `struct` for these purposes:
+```csharp
+struct Month {
+	int Num; // or string Name;
+}
+struct Day {
+	int Num;
+}
+
+enum Month {
+	January, February, ... 
+}
+enum Day {
+	First, Second, ...
+}
+```
 
 <div style="page-break-after: always"></div>
 
@@ -39,7 +56,17 @@ It is a place where people can publish their libraries. Every package has `.nupk
 ### JIT Optimizations
 **Inline expansion**: when we call function B() from function A() multiple times (let's say, is is inside a loop), compiler will try to to unfold function B() if it is small (rule of thumb: small := "under 20B"). The reason for doing it is that if B() is small and we iteratively call it, then we will spend much more time preparing environment to call this function(like initializing stack in the beginning and then releasing it in the end; so-called prolog and epilog of functions) and not in its actual behavior. 
 
-If you want to force inlining, you can add attribute `[MethodImpl(MethodImplOptions.AggressiveInlining]` . If you do not want any inlining whatsoever, then add `[MethodImpl(MethodImplOptions.NoInlining]` to a method. **Usually you do not want to do it (!)** because these optimization are very tricky to use properly.
+If you want to force JIT to make more inlining (you can't really force to do it always, JIT always can decide not to do it), you can add attribute `[MethodImpl(MethodImplOptions.AggressiveInlining]` . If you do not want any inlining whatsoever, then add `[MethodImpl(MethodImplOptions.NoInlining]` to a method. **Usually you do not want to do it (!)** because these optimization are very tricky to use properly.
+
+**Devirtualization**: This optimization allows the JIT compiler to decide whether to generate code that uses a specific method implementation instead of abstract virtual dispatch. This can be illustrated in the following code:
+```csharp
+MyAbstractClass c = ...;
+if (c.GetType() == typeof(ConcreteDerivedClass))
+    c.F(); // Calls (potentially inlines) F because we know the exact method implementation
+else
+    c.F(); // Virtual dispatch
+```
+In this example, the JIT compiler performs devirtualization when it compares the type of the object `c` with the type `ConcreteDerivedClass`. If they match, it may decide to invoke the `F()` method directly on the concrete implementation, allowing optimizations like code inlining and improving performance.
 
 ### Virtual methods
 Virtual methods are used to create extensible interfaces. They use so-called **virtual methods table**(VMT or sometimes `vtable`). Then, when some class inherits from another which has at least one virtual method, we copy a pointer to the parent class' VMT. If the child class also has a virtual method, then we will store both table (parent's VMT and newly created child's).
@@ -63,7 +90,12 @@ VMT is used to determine at **run time** which method from which class in the hi
 
 Further reading : ["Virtual, new and override in C#"](https://pnguyen.io/posts/virtual-new-override-csharp/) (it also shows what happens during casting)
 
-**A big downside of virtual methods** is that it's impossible to inline them. So they are on average slower than usual methods.
+**A big downside of virtual methods** is that it's (usually) not possible to inline them since JIT does inlining only when it's 100% sure what method will be called. That's why virtual methods are on average slower than usual methods. 
+Although, JIT can inline virtual methods if they are `sealed` (or the entire class is sealed). For example:
+```csharp
+MySealedClass c = ...;
+c.MyVirtualMethod() // JIT is able to inline this!
+```
 
 <div style="page-break-after: always"></div>
 
@@ -99,7 +131,9 @@ If you want to call a member from the base (also called "parent") class, you can
 
 # Lecture 8: factory, `callvirt`, properties, access modifiers
 
-**Can I call a virtual method from a constructor?** In .NET, yes. In some other languages, no. Why? Because VMT might not have been initialized yet.
+**Can I call a virtual method from a constructor?** In .NET, yes. In some other languages, no. Why? Virtual Method Table (VMT), which keeps track of virtual methods and their implementations, might not have been fully initialized during the construction phase.
+
+*It's worth mentioning that most **linters** (tools that analyze code for potential issues) usually give a warning in such cases. This is because calling a virtual method from a constructor can lead to certain invariants not being set in the derived class. For instance, fields that get initialized in the constructor may still be `null`, and this is something a programmer might not expect when writing an `override` method. Therefore, caution is advised when invoking virtual methods within constructors to ensure proper initialization and avoid unexpected behavior in the derived class.*
 
 ### Factory design pattern
 If you repeatedly generate a specific kind (or class) of objects, you can consider implementing the other object that will generate these objects on demand. For example, you need to generate apples and sometimes golden apples (once every N apple) for your tree. Perfect use-case for factory pattern. Other examples and further explanation : https://refactoring.guru/design-patterns/factory-method
@@ -231,6 +265,10 @@ object o = a; // boxing `a`. Runtime creates an instance of System.Int32 on heap
 // unboxing:
 object o = 5;
 int i = (int)o; // unboxing always requires explicit casting.
+
+// note that unboxing also requires accurately determining the type; for example, you cannot unbox an `int` into a `long` without precise casting.
+long a = (long)o; // error!
+long a = (long)(int)o // OK
 ```
 - You want to prevent repeated boxing/unboxing in your code because it significantly slows it down. Example:
 ```csharp
@@ -282,7 +320,7 @@ void f() {
 ```
 - "call by reference"
 - formal parameter is an alias for the actual parameter (address of actual parameter is passed)
-- actual parameter must be a variable (so could **not** be `Inc(123123)`)
+- actual parameter must be a variable or method that returns corresponding type (so could **not** be `Inc(123123)` but can be `Inc(ref somevar)`, `Inc(ref MyClass.MyMethodThatReturnsRefInt())`);
 
 **Discard variable**: If you want to discard some return value, use `_`. Example : `int.TryParse("123", out int _)`.
 
@@ -362,7 +400,7 @@ struct S {
 	Because of back compatibility with VSBasic rectangular arrays are paradoxically slower for access than jagged. They are still more memory efficient but keep in mind that access in 2-3x slower.
 - When you access elements in array, runtime checks if you are accessing elements still inside array (if no, throws `IndexOutOfRangeException`)
 
-**`default` keyword**: `default(int)` or just `default` initialized variable with its default value. For `int` it is 0, for `string` it is "", and so on.
+**`default` keyword**: `default(int)` or just `default` initialized variable with its default value. For `int` it is 0, for `string` it is `null` (same for all reference types). For all nullable types(i.e. `int?`) default() is `null`.
 
 ### Implicit and explicit constructors
 Object always has an implicit constructor without parameters which sets zero to memory that is allocated for the object for initializing. Also, object can have an explicit constructor without parameters. But it is called only explicitly too. Example:
@@ -445,19 +483,29 @@ class Person {
 }
 ```
 - a is [condition, condition, type, condition, ....]. 
-	  Should have at least 3 elements (conditions and/or types)
-	  Note that types in this matching could allocated on GC heap!
+	This is so-called list pattern. You can compare list in the variable on the left to the conditions on the right. 
+	  
+	Should have at least 3 elements (conditions and/or types)
+	Note that types in this matching could allocated on GC heap!
+	Example:
+```csharp
+int[] numbers = { 1, 2, 3 };
+
+Console.WriteLine(numbers is [1, 2, 3]);  // True
+Console.WriteLine(numbers is [1, 2, 4]);  // False
+Console.WriteLine(numbers is [1, 2, 3, 4]);  // False
+Console.WriteLine(numbers is [0 or 1, <= 2, >= 3]);  // True
+```
 
 ### Exceptions
 - All exceptions are reference type objects and have to be descendants of `System.Exception` or descendants of other types that inherit from `System.Exception`.
-- If exception is thrown, then the rest of the code of function will be skipped as well as the rest of the code of functions which called the function where this error has occurred. 
+- If exception is thrown, then the rest of the code of function will be skipped (except for the `finally` block if it's present. it will be executed after `try` and `catch` blocks) as well as the rest of the code of functions which called the function where this error has occurred. 
 - Exception objects also have members like `message`, `StackTrace`, `InnerException`. `StackTrace` gets a string representation of the immediate frames on the call stack. It helps to find out how, where and why error has occurred. `InnerException` is the other exception which caused the exception. For example, you create your custom exception `UserNotFoundException` when you don't find your user in data. Exception you get might be `FileNotFoundException`, `SqlException` and so on. Then, you return `UserNotFoundException` with the specific `InnerException` which caused it. 
-- **Why exceptions are so slow?** Part of the reason is that it fills `StackTrace` and we can't just literally jump to the end of the function when error was thrown. It could have leaded to unallocated variables and overall problems with memory. So this "jump" is quite complex from the runtime standpoint. 
+- **Why exceptions are so slow?** Part of the reason is that it fills `StackTrace` and we can't just literally jump to the end of the function when error was thrown. It could have leaded to unallocated variables and overall problems with memory. Also, we have to determine where is the the nearest `catch` and `finally` blocks. So this "jump" is quite complex from the runtime standpoint. 
 
 #### Code contracts
 Basic principles of automated analysis and verification of programs (model checking, static analysis, dynamic analysis, and deductive methods) and their practical applications (e.g., detecting concurrency errors).
 
-<div style="page-break-after: always"></div>
 <div style="page-break-after: always"></div>
 
 # Lecture 13: more about exceptions, `finally` and `using` keywords
@@ -475,6 +523,7 @@ try {
 catch (Exception e) {
 	// process error
 	throw e; // creates new StackTrace!
+	throw; // preserves StackTrace, throws `e` further
 }
 ```
 Sometimes it is useful if your client has an access to errors and you don't want him to know internals of your program.
@@ -489,13 +538,19 @@ The `using` statement ensures the correct use of an [IDisposable](https://learn.
 Often it is used to work with files: file is opened only for the duration of the code inside `using`, then `.Dispose()` is called.
 
 **How to use it?**
-- one using:
+- using with brackets:
 ```csharp
 var numbers = new List<int>();
 using (StreamReader reader = File.OpenText("reader.txt"))
 {
 	// ...
 }
+```
+
+- using without brackets are allowed too.
+```csharp
+using StreamReader sr = new StreamReader(...);
+// sr lives until the end of the scope
 ```
 
 - several usings: you can either nest them, or inline outer ones:
@@ -542,15 +597,15 @@ Note that if you have, for example, array of large objects, then it does not mea
 
 #### Garbage collector modes
 Server mode (optimized for fast response time, high throughput and scalability):
-	Shared heap. It GC is called, then all threads are paused. Also, GC operates from the thread that called GC.
+	Can have several heaps. GC has its separate threads. Also, GC operates from the thread that called GC.
 Workstation mode (designed for client apps):
-	GC has its separate threads.
+	Has only one heap. When GC is called, then all threads are paused.
 Read more [here](https://learn.microsoft.com/en-us/dotnet/standard/garbage-collection/workstation-server-gc)
 
 #### When GC is executed?
-**When memory is needed.** In other words, when you try to allocate memory, usually with `new`. Also, Windows OS can send message to all applications to run their GCs.
+**When memory is needed:** This occurs when you attempt to allocate memory, often done using the `new` keyword. The initiation of garbage collection (GC) is typically prompted by various factors. These include the passage of a certain amount of time since the last GC execution, the allocation of a specific amount of memory since the last GC, and various other heuristics. Additionally, the Windows operating system may send messages to all applications, instructing them to run their garbage collectors.
 
-Garbage collection is very good for **short-lived objects** because we will free a lot of memory when GC is executed; consequently, we won't need to copy a lot of objects.
+Garbage collection proves highly effective for managing **short-lived objects**. When the GC is executed, a significant amount of memory is freed, reducing the need to copy a large number of objects. This efficiency is particularly advantageous for short-lived objects, as it helps maintain a more streamlined and responsive memory management process.
 
 #### How objects are stored?
 - GC builds a graph of objects where vertices are objects and edges are references to other objects (for example, field with some reference type object).
@@ -559,8 +614,9 @@ Garbage collection is very good for **short-lived objects** because we will free
 - JIT compiles let's GC now all of the data above. They are called **GC roots**.
 
 #### How it works?
-- (1. phase) Traverse the graph of objects and mark all objects.
-- (2. phase) Then, delete all objects which were not marked.
+- **(1st phase):** Traverse the graph of objects and mark all objects that are still in use.
+- **(2nd phase):** Move the live objects to a compacted space, overwriting the non-marked objects. The space vacated by non-marked objects is considered free, and new objects can be allocated in these spaces.
+This process ensures efficient memory usage by compacting the live objects and effectively managing the allocation of new objects in the reclaimed memory spaces.
 
 **Problems:**
 - Holes in memory : when you free some blocks, your memory can become tattered. And then you can have enough memory for allocating some new object but because this memory isn't sequential, you will fail to allocate this new object. Solution: **heap compacting**: GC squeezes objects together, trying not to leave free memory between them.
@@ -579,16 +635,21 @@ Garbage collection primarily occurs with the reclamation of short-lived objects.
 - **Generation 1**: This generation contains short-lived objects and serves as a buffer between short-lived objects and long-lived objects.
 - **Generation 2**: This generation contains long-lived objects. An example of a long-lived object is an object in a server application that contains static data that's live for the duration of the process.
 
-#### Memory leaks
+#### Potential memory leaks and inefficiencies
 When can occur? Typical cases:
-- Reference from a variable.
-- Long-lived objects. If we don't reach 2. generation, long-lived objects can be there for a very long time.
-- When you call `List<T>.Clear()`. `Clear()` sets Count of the list to zero but objects that were in the list still can be pointed to other objects which prevents them from being garbage-collected. Ideally, if you know that you won't fill all cleared cells in list, you should set them to `null`.
+- Reference from a variable. Memory leak.
+- Long-lived objects. If we don't reach 2. generation, long-lived objects can be there for a very long time. Inefficiency.
+- When you call `List<T>.Clear()`. `Clear()` sets Count of the list to zero but objects that were in the list still can be pointed to other objects which prevents them from being garbage-collected. Ideally, if you know that you won't fill all cleared cells in list, you should set them to `null`. Memory leak.
 
 ### Strings
 - In memory stored as a block : [length, char0, char1, ...].
 - Always immutable.
 - `StringBuilder` is a "mutable string". Inside is something like `List<char>`.
-- There are a lot of optimizations for `string`: for example, if you write something like `"hello from C# notes" + "yeah, it's the last lecture" + "uWu"` compiler will replace it with `string.Concat()` of this strings which is faster.
-- `string.Format("{0}, .... {1} ....", string1, string2)`. Be careful with this one, for `string1`/`string2` values like `{0}`, `{1}` it will fill with `string1` and `string2` again.
+- There are a lot of optimizations for `string`: for example, if you write something like `"hello from C# notes" + "yeah, it's the last lecture" + "uWu"` compiler will replace it with `string.Concat()` of this strings which is faster. Or compile even can use constant-folding (similarly to how `int num = 100 * 100 * 100` will be translated to `int num = 1000000`).
+- When you are using `String.Format` be careful to not to use strings that you don't control. Prefer to write String.Format like on the second line to the what is on the third one.
+```csharp
+string name = "{0}";
+Console.WriteLine("{0}: hello {1}", DateTime.Now, name); // 01/18/2024 18:36:20: hello {0}
+Console.WriteLine("{0}: hello" + name + "!", DateTime.Now); // 01/18/2024 18:36:20: hello01/18/2024 18:36:20!
+```
 - `$"{string1} ... {string2}"` is another way to concatenate strings. Behind the scenes uses `InterpolatedStringHandler`.
