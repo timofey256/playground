@@ -4,7 +4,7 @@
 How are they stored in memory:
 	`readonly` will occupy space for every instance of an object.
 	`readonly static` will be stored in one specific place in memory, shared among all object instances..
-	`static` won't occupy any space and will be replaced with actual values during compilation.
+	`const` won't occupy any space and will be replaced with actual values during compilation.
 
 During compile-time, the compiler performs **constant-folding**, making computations on constants wherever possible. For example, `int variable = 2 * 2 * 2` will be folded to `int variable = 8`.
 
@@ -12,7 +12,7 @@ Note that you cannot assign runtime values (e.g., the output of functions) to a 
 
 **Exception**: `string` can be assigned to a constant despite being a reference type.
 
-If you use constants in your library, after changing them, you should also recompile a program that uses this library. Otherwise, the program will use old values of these constants. This does not occur with `readonly` fields.
+If you use constants in your library, after changing them, you should also recompile a program that uses this library. Otherwise, the program will use old values of these constants. This does not occur with `readonly` fields. That's why it is not a good idea to use public constants.
 
 ### (Static) constructors 
 Static constructors aren't called at the start of the program but whenever you need to use a static field or property. The JIT compiler will analyze your code and call the static constructor before you use any method/field/property of an object. In other words, constructors are **guaranteed** to be called before you call anything from an object.
