@@ -239,7 +239,7 @@ struct S {
 
 int b = 7; // 4B
 
-S s1 = new S(); // don't conflate with `new` in reference types, for value types `new` doesn't allocate anything! 
+S s1 = new S(); // don't conflate with `new` in reference types, for value types `new` doesn't allocate space! 
 ```
 
 **Reference types:**
@@ -281,9 +281,9 @@ for (int i=0; i<1000; i++) {
 
 ### Pointers in C\#
 - It is address.
-- Syntax : `int* a, b;`
-- Explicit reference/dereference : `a=&...; *b=...`
-- No limitations to what it can be pointer.
+- Syntax : `int* a, b;`.
+- Explicit reference/dereference : `a=&...; *b=...`.
+- No limitations to what can be pointer.
 - Garbage collector is not responsible for pointers!
 
 ### Something in between pointers and reference types : tracking reference
@@ -343,7 +343,7 @@ struct S2 : S1 {
 S1 s1 = new S1(); // size 4B
 S2 s2 = new S2(); // size 8B
 
-s1 = s2 // what should happen? s1 is 4B and s2 is 8B. it would be complex and is frequent cause of bugs (for example in C++ where structs aren't sealed), so this structs are sealed.
+s1 = s2 // if structs weren't sealed, what should have happened here? s1 is 4B and s2 is 8B. it would be complex and is frequent cause of bugs (for example in C++ where structs aren't sealed), so this structs are sealed.
 
 // note that this does not happen in reference types because all variables of this type are equal in their size (cuz they are pointers to memory)
 ```
@@ -392,7 +392,7 @@ struct S {
 // ---------------------------------------------------
 ```
 - Arrays are always initialized after declaring.
-- arrays are a descendant of `System.Array`.
+- arrays inherit from `System.Array`.
 - **Multidimensional arrays**: 
 	- Jagged: `int[][] a = new int[2][]`. Literally, arrays of arrays (as a reference types). We store pointers to arrays in the bigger array. It allows to these smaller arrays have different sizes because they are independent objects.
 	- Rectangular: `int[,] = new int[2,3]`.
